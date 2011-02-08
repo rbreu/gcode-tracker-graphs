@@ -163,16 +163,16 @@ def prepare_data_for_plot(db):
 
 
 def plot(opened_issues, closed_issues, open_issues, dates):
-    logging.info("Plotting to file %s ..." % (OPEN_ISSUES_OUTFILE,))
+    logging.info("Plotting to file %s ..." % (conf["open_issues_outfile"],))
     
     figure = pyplot.figure()
     ax = figure.gca()
     ax.plot_date(dates, open_issues, linestyle="-", marker='None', color='red')
     ax.xaxis.set_major_locator(mdates.MonthLocator(range(1, 12 ,3)))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
-    figure.savefig(OPEN_ISSUES_OUTFILE)
+    figure.savefig(conf["open_issues_outfile"])
 
-    logging.info("Plotting to file %s ..." % (OPENED_CLOSED_ISSUES_OUTFILE,))
+    logging.info("Plotting to file %s ..." % (conf["opened_closed_issues_outfile"],))
     figure = pyplot.figure()
     ax = figure.gca()
     ax.plot_date(dates, opened_issues, linestyle="-", marker='None',
@@ -182,7 +182,7 @@ def plot(opened_issues, closed_issues, open_issues, dates):
     ax.xaxis.set_major_locator(mdates.MonthLocator(range(1, 12 ,3)))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
     ax.legend()
-    figure.savefig(OPENED_CLOSED_ISSUES_OUTFILE)
+    figure.savefig(conf["opened_closed_issues_outfile"])
 
 
 
