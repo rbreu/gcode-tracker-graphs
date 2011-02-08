@@ -124,7 +124,7 @@ def prepare_data_for_plot(db):
     cursor = db.cursor()
     
     logging.info("Preparing data for plotting...")
-    cursor.execute("SELECT DATE(MIN(opened)) FROM issues")
+    cursor.execute("SELECT DATE(MIN(opened)) FROM %s" % conf["project"],)
     start_date =  cursor.fetchall()[0][0]
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
     end_date = datetime.today()
@@ -139,12 +139,14 @@ def prepare_data_for_plot(db):
     delta = timedelta(days=1)
     
     while date < end_date:
-        cursor.execute("SELECT COUNT(*) FROM issues WHERE DATE(opened)=?",
-                   (date.strftime("%Y-%m-%d"),))
+        cursor.execute("SELECT COUNT(*) FROM %s WHERE DATE(opened)=?" %
+                       (conf["project"],),
+                       (date.strftime("%Y-%m-%d"),))
         opened = cursor.fetchall()[0][0]
 
-        cursor.execute("SELECT COUNT(*) FROM issues WHERE DATE(closed)=?",
-                   (date.strftime("%Y-%m-%d"),))
+        cursor.execute("SELECT COUNT(*) FROM %s WHERE DATE(closed)=?" %
+                       (conf["project"],),
+                       (date.strftime("%Y-%m-%d"),))
         closed = cursor.fetchall()[0][0]
         open_count = open_count + opened - closed
         logging.debug("On %s: %s opened, %s closed, %s open" %
