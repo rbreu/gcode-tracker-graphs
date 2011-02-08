@@ -33,6 +33,15 @@ import imp
 def init_db():
     conn = sqlite3.connect(expanduser("~/.gcode_tracker_graphs.sqlite"))
     cursor = conn.cursor()
+
+    if conf["cache"] == "none":
+        cursor.execute("DELETE FROM %s" % (conf["project"],))
+    elif conf["cache"] == "closed":
+        cursor.execute("DELETE FROM %s WHERE closed=0" % (conf["project"],))
+    else:
+        pass
+
+    
     cursor.execute("""CREATE TABLE IF NOT EXISTS %s
                      (opened REAL,
                       closed REAL DEFAULT 0)""" % (conf["project"],))

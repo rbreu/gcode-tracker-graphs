@@ -16,8 +16,8 @@ Execute:
 
 gcode_tracker_graphs.py myproject
 
-The program will cache the issue info per project in 
+Depending on the configuration, the program will cache the issue info
+per project in
 
 ~/.gcode_tracker_graphs.sqlite
 
-Remove that file if you want to start fresh.
