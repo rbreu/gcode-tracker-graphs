@@ -27,13 +27,14 @@ import matplotlib.pyplot as pyplot
 import matplotlib.dates as mdates
 from os.path import expanduser
 import sys
+import imp
 
 
 def create_db():
-    conn = sqlite3.connect(DB_OUTFILE)
+    conn = sqlite3.connect(expanduser("~/.gcode_tracker_graphs.sqlite"))
     cursor = conn.cursor()
-    cursor.execute("DROP TABLE IF EXISTS issues")
-    cursor.execute("CREATE TABLE issues (opened REAL, closed REAL DEFAULT 0)")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS ?
+                     (opened REAL, closed REAL DEFAULT 0)""" % (conf[""],))
     conn.commit()
     return conn
 
@@ -174,8 +175,8 @@ def plot(opened_issues, closed_issues, open_issues, dates):
 if __name__ == "__main__":
 
     project = sys.argv[1]
-    conf = getattr(__import__(expanduser("~/gcode_tracker_graphs_conf")),
-                   project)
+    _ = imp.load_source("_", expanduser("~/.gcode_tracker_graphs.conf"))
+    conf = getattr(_, project)
     logging.basicConfig(loglevel=getattr(logging, conf["loglevel"]))
     
     db = create_db()

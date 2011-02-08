@@ -8,7 +8,7 @@ The Gcode python API
 Usage:
 ======
 
-Copy gcode_tracker_graphs_conf.py to ~/.gcode_tracker_graphs_conf.py
+Copy gcode_tracker_graphs_conf.py to ~/.gcode_tracker_graphs.conf
 and modify it accordingly. It should contain one section (dictionary)
 per Gcode project you want to use.
 
