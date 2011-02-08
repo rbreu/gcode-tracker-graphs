@@ -1,0 +1,23 @@
+Prerequisites:
+==============
+
+Python >= 2.6
+Matplotlib
+The Gcode python API
+
+Usage:
+======
+
+Copy gcode_tracker_graphs_conf.py to ~/.gcode_tracker_graphs_conf.py
+and modify it accordingly. It should contain one section (dictionary)
+per Gcode project you want to use.
+
+Execute:
+
+gcode_tracker_graphs.py myproject
+
+The program will cache the issue info per project in 
+
+~/.gcode_tracker_graphs.sqlite
+
+Remove that file if you want to start fresh.
