@@ -30,11 +30,12 @@ import sys
 import imp
 
 
-def create_db():
+def init_db():
     conn = sqlite3.connect(expanduser("~/.gcode_tracker_graphs.sqlite"))
     cursor = conn.cursor()
-    cursor.execute("""CREATE TABLE IF NOT EXISTS ?
-                     (opened REAL, closed REAL DEFAULT 0)""" % (conf[""],))
+    cursor.execute("""CREATE TABLE IF NOT EXISTS %s
+                     (opened REAL,
+                      closed REAL DEFAULT 0)""" % (conf["project"],))
     conn.commit()
     return conn
 
@@ -50,11 +51,11 @@ def get_closed_date(comments):
 
     for comment in comments:
         if date is None:
-            for close_string in CLOSED:
+            for close_string in conf["closed"]:
                 if close_string in str(comment.updates):
                     date = comment.published.text
         else:
-            for open_string in OPEN:
+            for open_string in conf["open"]:
                 if open_string in str(comment.updates):
                     date = None
                 
@@ -70,11 +71,20 @@ def get_all_issues(client, db):
 
     while True:
         i += 1
+
+        # Do we already have info about this issue?
+        cursor.execute("SELECT COUNT(*) FROM %s where ROWID=?"
+                       % (conf["project"],), (i,))
+        if cursor.fetchall()[0][0] > 0:
+            logging.debug("Issue %s exists in cache. Skipping." % (i,))
+            continue
+
+        # Get the issue from Gcode
         query = gdata.projecthosting.client.Query(issue_id=i, max_results=1)
         
         try:
-            feed = client.get_issues(PROJECT, query=query)
-            comments_feed = client.get_comments(PROJECT, i)
+            feed = client.get_issues(conf["project"], query=query)
+            comments_feed = client.get_comments(conf["project"], i)
         except gdata.client.RequestError:
             if retry > 5:
                 logging.warning("Issue %s not found. Giving up." % (i,))
@@ -90,19 +100,21 @@ def get_all_issues(client, db):
         if closed_date:
             logging.debug("Issue %s opened at %s closed at %s" %
                           (i, issue.published.text, closed_date))
-            cursor.execute("INSERT INTO issues (ROWID,opened,closed) VALUES (?,?,?)",
-                       (i, issue.published.text, closed_date))
+            cursor.execute("INSERT INTO %s (ROWID,opened,closed) VALUES (?,?,?)"
+                           % (conf["project"],),
+                           (i, issue.published.text, closed_date))
         else:
             logging.debug("Issue %s opened at %s still open" %
                           (i, issue.published.text))
-            cursor.execute("INSERT INTO issues (ROWID,opened) VALUES (?,?)",
-                       (i, issue.published.text,))
+            cursor.execute("INSERT INTO %s (ROWID,opened) VALUES (?,?)"
+                           % (conf["project"],),
+                           (i, issue.published.text,))
 
         retry = 0
         
-    cursor.execute("SELECT COUNT(*) FROM issues")
+    cursor.execute("SELECT COUNT(*) FROM %s" % (conf["project"],))
     count_all =  cursor.fetchall()[0][0]
-    cursor.execute("SELECT COUNT(*) FROM issues WHERE closed=0")
+    cursor.execute("SELECT COUNT(*) FROM %s WHERE closed=0" % (conf["project"],))
     count_open =  cursor.fetchall()[0][0]
     logging.info("Found %s issues total, %s open." % (count_all, count_open))
     db.commit()
@@ -176,14 +188,18 @@ if __name__ == "__main__":
 
     project = sys.argv[1]
     _ = imp.load_source("_", expanduser("~/.gcode_tracker_graphs.conf"))
+    global conf
     conf = getattr(_, project)
-    logging.basicConfig(loglevel=getattr(logging, conf["loglevel"]))
+    conf["project"] = project
     
-    db = create_db()
+    logging.basicConfig(level=getattr(logging, conf["loglevel"]))
+    
+    db = init_db()
     
     logging.info("Connecting to gcode...")
     client = gdata.projecthosting.client.ProjectHostingClient()
-    client.ClientLogin(USER, PASSWORD, source="otwarchive-graphs")
+    client.ClientLogin(conf["user"], conf["password"],
+                       source="otwarchive-graphs")
 
     get_all_issues(client, db)
     plot(*prepare_data_for_plot(db))
