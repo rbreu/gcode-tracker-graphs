@@ -171,14 +171,42 @@ def prepare_data_for_plot(db):
     return opened_issues, closed_issues, open_issues, dates
 
 
+def annotate_plot(ax, dates, data):
+    if not conf["annotations"]:
+        return ax
+
+    maxdata = max(data)
+    
+    for (text, date) in conf["annotations"]:
+        logging.debug("Annotating %s: %s" % (date, text))
+        x = mdates.date2num(datetime.strptime(date, "%Y-%m-%d"))
+        y = max(data[dates.index(x)], 0.1)
+        if y > maxdata/2:
+            ytext = maxdata/5
+            align = "bottom"
+        else:
+            ytext = maxdata*4/5
+            align = "top"
+
+        ax.annotate(text, (x, y), xytext=(x, ytext), rotation=-90,
+                    verticalalignment = align,
+                    horizontalalignment = "center",
+                    arrowprops=dict(arrowstyle="-", connectionstyle="arc3"),)
+
+    return ax
+        
+
 def plot(opened_issues, closed_issues, open_issues, dates):
     logging.info("Plotting to file %s ..." % (conf["open_issues_outfile"],))
     
     figure = pyplot.figure()
     ax = figure.gca()
     ax.plot_date(dates, open_issues, linestyle="-", marker='None', color='red')
-    ax.xaxis.set_major_locator(mdates.MonthLocator(range(1, 12 ,3)))
+    ax = annotate_plot(ax, dates, open_issues)
+    ax.xaxis.set_major_locator(mdates.MonthLocator(range(1, 12 ,2)))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
+    figure.autofmt_xdate(rotation=45)
+    figure.suptitle("Number of open issues")
     figure.savefig(conf["open_issues_outfile"])
 
     logging.info("Plotting to file %s ..." % (conf["opened_closed_issues_outfile"],))
@@ -188,9 +216,12 @@ def plot(opened_issues, closed_issues, open_issues, dates):
                  label="Opened issues", color='red')
     ax.plot_date(dates, closed_issues, linestyle="-", marker='None',
                  label="Closed issues", color='blue')
-    ax.xaxis.set_major_locator(mdates.MonthLocator(range(1, 12 ,3)))
+    ax = annotate_plot(ax, dates, closed_issues)
+    ax.xaxis.set_major_locator(mdates.MonthLocator(range(1, 12 ,2)))
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%y'))
     ax.legend()
+    figure.autofmt_xdate(rotation=45)
+    figure.suptitle("Number of issues opened/closed per day")
     figure.savefig(conf["opened_closed_issues_outfile"])
 
 
