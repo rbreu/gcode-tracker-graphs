@@ -98,9 +98,9 @@ def get_all_issues(client, db):
             comments_feed = client.get_comments(conf["project"], i)
         except gdata.client.RequestError, e:
             if re.match("Server responded with: (403|404)", e.message):
-                # this issue is forbidden or deleted, try the next one
+                # this issue is inaccessible, try the next one
                 logging.warning(e.message)
-                if next_retry > 5:
+                if next_retry > conf["next_retry"]:
                     logging.warning("Issue %i: Giving up." % (i,))
                     break
                 else:
@@ -110,7 +110,7 @@ def get_all_issues(client, db):
                     continue
             elif re.match("Server responded with: (500)", e.message):
                 # try this issue again
-                if same_retry > 5:
+                if  same_retry > conf["same_retry"]:
                     logging.warning(e.message)
                     logging.warning("Issue %i: Giving up." % (i,))
                     i += 1
