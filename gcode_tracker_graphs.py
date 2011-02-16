@@ -28,6 +28,7 @@ import matplotlib.dates as mdates
 from os.path import expanduser
 import sys
 import imp
+import re
 
 
 def init_db():
@@ -73,19 +74,20 @@ def get_closed_date(comments):
 
 def get_all_issues(client, db):
     logging.info("Collecting issues...")
-    retry = 0
+    next_retry = 0
+    same_retry = 0
     cursor = db.cursor()
 
-    i = 0
+    i = 1
 
     while True:
-        i += 1
 
         # Do we already have info about this issue?
         cursor.execute("SELECT COUNT(*) FROM %s where ROWID=?"
                        % (conf["project"],), (i,))
         if cursor.fetchall()[0][0] > 0:
             logging.debug("Issue %s exists in cache. Skipping." % (i,))
+            i += 1
             continue
 
         # Get the issue from Gcode
@@ -94,14 +96,32 @@ def get_all_issues(client, db):
         try:
             feed = client.get_issues(conf["project"], query=query)
             comments_feed = client.get_comments(conf["project"], i)
-        except gdata.client.RequestError:
-            if retry > 5:
-                logging.warning("Issue %s not found. Giving up." % (i,))
-                break
+        except gdata.client.RequestError, e:
+            if re.match("Server responded with: (403|404)", e.message):
+                # this issue is forbidden or deleted, try the next one
+                logging.warning(e.message)
+                if next_retry > 5:
+                    logging.warning("Issue %i: Giving up." % (i,))
+                    break
+                else:
+                    logging.warning("Issue %i: Skipping." % (i,))
+                    i += 1
+                    next_retry += 1
+                    continue
+            elif re.match("Server responded with: (500)", e.message):
+                # try this issue again
+                if same_retry > 5:
+                    logging.warning(e.message)
+                    logging.warning("Issue %i: Giving up." % (i,))
+                    i += 1
+                    continue
+                else:
+                    logging.debug(e.message)
+                    logging.debug("Issue %i: Trying again." % (i,))
+                    same_retry += 1
+                    continue
             else:
-                logging.warning("Issue %s not found. Trying next." % (i,))
-                retry += 1
-                continue
+                raise
         
         issue = feed.entry[0]
 
@@ -119,7 +139,10 @@ def get_all_issues(client, db):
                            % (conf["project"],),
                            (i, issue.published.text,))
 
-        retry = 0
+        next_retry = 0
+        same_retry = 0
+        i += 1
+
         
     cursor.execute("SELECT COUNT(*) FROM %s" % (conf["project"],))
     count_all =  cursor.fetchall()[0][0]
