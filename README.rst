@@ -1,3 +1,11 @@
+Screenshots:
+============
+
+.. image:: https://github.com/rbreu/gcode-tracker-graphs/raw/master/screenshots/open_issues.png
+
+.. image:: https://github.com/rbreu/gcode-tracker-graphs/raw/master/screenshots/opened_closed_issues.png
+
+
 Prerequisites:
 ==============
 
