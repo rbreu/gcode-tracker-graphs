@@ -14,6 +14,14 @@ Prerequisites:
 * The Gcode python API
 
 
+Known Problems:
+===============
+
+I haven't found a way to get more than the first 25 comments
+(i.e. real comments + label changes + status changes etc.) from an
+issue. :(
+
+
 Usage:
 ======
 
