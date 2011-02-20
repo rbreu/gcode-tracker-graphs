@@ -25,10 +25,11 @@ import sqlite3
 from datetime import datetime, timedelta
 import matplotlib.pyplot as pyplot
 import matplotlib.dates as mdates
-from os.path import expanduser
 import sys
-import imp
 import re
+from os.path import expanduser
+
+from config import conf
 
 
 def init_db():
@@ -254,12 +255,13 @@ def plot(opened_issues, closed_issues, open_issues, dates):
 
 if __name__ == "__main__":
 
-    project = sys.argv[1]
-    _ = imp.load_source("_", expanduser("~/.gcode_tracker_graphs.conf"))
-    global conf
-    conf = getattr(_, project)
-    conf["project"] = project
-    
+    try:
+        project = sys.argv[1]
+    except IndexError:
+        print "Usage: gcode_tracker_graphs.py <projectname>"
+        sys.exit(1)
+        
+    conf.load_from_file(project)
     logging.basicConfig(level=getattr(logging, conf["loglevel"]))
     
     db = init_db()

@@ -19,7 +19,8 @@ Known Problems:
 
 I haven't found a way to get more than the first 25 comments
 (i.e. real comments + label changes + status changes etc.) from an
-issue. :(
+issue. :( For projects that have lots of issues with many comments,
+the graph results will not be very useful.
 
 
 Usage:
@@ -38,3 +39,13 @@ per project in::
 
   ~/.gcode_tracker_graphs.sqlite
 
+
+Configuration:
+==============
+
+The sample confing file gcode_tracker_graphs_conf.py provides a
+commented example showing all configuration options and a minimal
+example which will fall back on default options. To view default
+options, run::
+
+  config.py
