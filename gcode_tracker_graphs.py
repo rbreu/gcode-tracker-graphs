@@ -59,6 +59,9 @@ def get_closed_date(comments):
     """
     date = None
 
+    if len(comments) == 25:
+        logging.warning("Reached limit of 25 comments.")
+
     for comment in comments:
         if date is None:
             for close_string in conf["closed"]:
